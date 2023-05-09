@@ -52,7 +52,9 @@ model Project {
   deleted     Boolean   @default(false)
 
   //@@unique means that the combination of ownerId and name must be unique
+  //So with the same owner we can't have two projects with the same name
   //@@index means that we want to index the combination of ownerId and id
+  //So we might want to search for projects by owner and id
   @@unique([ownerId, name])
   @@index([ownerId, id])
 }
