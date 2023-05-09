@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  //@id means that this field is the primary key
+  //@default means that this field will be automatically added to our model
+  //uuid() is a function that generates a unique id for us
+  //@default(uuid()) means that the id will be generated automatically
+  //createdAt and updatedAt are automatically added to our model
+  //id, createdAt, and updatedAt are kind of a convention in Prisma
+
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  //@unique means that this field must be unique
+  //String? means that this field is optional
+  //[] means that this field is an array
+  email     String    @unique
+  password  String
+  firstName String?
+  lastName  String?
+  projects  Project[]
+  tasks     Task[]
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId String
+
+  //By typing owner  
+  //By typing User here, we are telling Prisma that this field is a relation to the User model
+  //fields: [ownerId] means that the ownerId field in the Project model is related to the id field in the User model
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  name        String
+  description String?
+  due         DateTime?
+  tasks        Task[]
+  deleted     Boolean   @default(false)
+
+  //@@unique means that the combination of ownerId and name must be unique
+  //@@index means that we want to index the combination of ownerId and id
+  @@unique([ownerId, name])
+  @@index([ownerId, id])
+}
+
+
+//enum is a special type that allows us to specify a list of possible values
+//TASK_STATUS is the name of the enum
+//NOT_STARTED, STARTED, and COMPLETED are the possible values
+enum TASK_STATUS {
+  NOT_STARTED
+  STARTED
+  COMPLETED
+}
+
+model Task {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  //We are specifying that the status field can only have one of the values specified in the TASK_STATUS enum
+  status      TASK_STATUS @default(NOT_STARTED)
+  name        String
+  description String
+
+  //We are specifying that the due field is optional
+  due     DateTime?
+  deleted Boolean   @default(false)
+
+  //@@index means that we want to index the ownerId field
+  //to index a field means that we want to optimize the database for that field
+  @@index([ownerId])
+}
